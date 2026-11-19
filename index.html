@@ -1,0 +1,1926 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PokeNexus Pre-Godot Breeding Chart</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --blue:        #2855ae;
+      --blue-dark:   #1a3a7a;
+      --blue-light:  #5b80d4;
+      --yellow:      #f7c948;
+      --yellow-dark: #d4a016;
+      --red:         #cc2222;
+      --offwhite:    #eef1f9;
+      --gray:        #6b7280;
+      --text:        #1a1a2e;
+      --shadow:      rgba(40,85,174,0.18);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: var(--blue-dark);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(circle at 60% 10%, rgba(204,34,34,0.25) 0%, transparent 55%),
+        radial-gradient(circle at 10% 80%, rgba(88,128,212,0.25) 0%, transparent 55%),
+        linear-gradient(160deg, #1a3a7a 0%, #0d1f4a 60%, #0a1530 100%);
+      z-index: 0;
+    }
+    body::after {
+      content: '';
+      position: fixed;
+      width: 600px; height: 600px;
+      border-radius: 50%;
+      border: 60px solid rgba(255,255,255,0.03);
+      top: -150px; right: -150px;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    header {
+      position: relative;
+      z-index: 10;
+      text-align: center;
+      padding: 32px 20px 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+    .disclaimer-banner {
+      position: relative;
+      z-index: 10;
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 10px 18px;
+      background: rgba(247,201,72,0.14);
+      border: 1px solid var(--yellow-dark);
+      border-radius: 10px;
+      text-align: center;
+      font-size: 12.5px;
+      font-weight: 700;
+      color: var(--yellow);
+      line-height: 1.5;
+    }
+    .logo-text {
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(14px, 3.5vw, 28px);
+      color: var(--yellow);
+      text-shadow: 3px 3px 0 var(--yellow-dark), 5px 5px 0 rgba(0,0,0,0.3), 0 0 40px rgba(247,201,72,0.5);
+      letter-spacing: 2px;
+      animation: logoFloat 3s ease-in-out infinite;
+    }
+    @keyframes logoFloat {
+      0%,100% { transform: translateY(0); }
+      50%      { transform: translateY(-6px); }
+    }
+    header h1 {
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(7px, 1.8vw, 11px);
+      color: var(--yellow);
+      text-shadow: 2px 2px 0 var(--yellow-dark);
+      letter-spacing: 1px;
+      line-height: 1.7;
+    }
+    .subtitle {
+      font-size: 12px;
+      color: rgba(255,255,255,0.65);
+      font-weight: 600;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+    .subtitle-godot {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 9px;
+      color: rgba(247,201,72,0.7);
+      letter-spacing: 3px;
+      text-transform: uppercase;
+    }
+    .companion-link {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--yellow);
+      text-decoration: none;
+      opacity: 0.85;
+      margin-top: 4px;
+    }
+    .companion-link:hover { opacity: 1; text-decoration: underline; }
+
+    main {
+      position: relative;
+      z-index: 10;
+      max-width: 860px;
+      margin: 0 auto 60px;
+      padding: 0 20px;
+    }
+
+    .card {
+      background: #ffffff;
+      border-radius: 20px;
+      box-shadow: 0 8px 40px var(--shadow), 0 2px 0 var(--yellow) inset;
+      padding: 28px;
+      border: 2px solid rgba(255,255,255,0.9);
+    }
+
+    /* ── LOADER ── */
+    #loader { text-align: center; padding: 60px 20px; }
+    .loader-ball {
+      width: 60px; height: 60px;
+      border-radius: 50%;
+      background: linear-gradient(to bottom, var(--red) 50%, white 50%);
+      border: 4px solid #222;
+      margin: 0 auto 20px;
+      animation: spin 0.9s linear infinite;
+      position: relative;
+    }
+    .loader-ball::after {
+      content: '';
+      position: absolute;
+      left: 50%; top: 50%;
+      transform: translate(-50%,-50%);
+      width: 16px; height: 16px;
+      border-radius: 50%;
+      background: white;
+      border: 4px solid #222;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    #loader p {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 9px;
+      color: var(--blue);
+      animation: blink 1s step-end infinite;
+    }
+    @keyframes blink { 50% { opacity: 0; } }
+
+    /* ── SEARCH ── */
+    .search-section { display: none; }
+    .search-section.visible { display: block; }
+
+    .search-label {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 9px;
+      color: var(--blue-dark);
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    .input-wrap {
+      position: relative;
+      max-width: 480px;
+    }
+    #pokemon-input {
+      width: 100%;
+      padding: 14px 44px 14px 16px;
+      font-size: 15px;
+      font-family: 'Nunito', sans-serif;
+      font-weight: 700;
+      border: 3px solid var(--blue-light);
+      border-radius: 12px;
+      outline: none;
+      color: var(--text);
+      background: var(--offwhite);
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    #pokemon-input:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 4px rgba(40,85,174,0.15);
+    }
+    .sprite-preview {
+      position: absolute;
+      right: 8px; top: 50%;
+      transform: translateY(-50%);
+      width: 36px; height: 36px;
+      object-fit: contain;
+    }
+    .autocomplete-list {
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0; right: 0;
+      background: white;
+      border: 2px solid var(--blue-light);
+      border-radius: 10px;
+      max-height: 220px;
+      overflow-y: auto;
+      z-index: 100;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+      display: none;
+    }
+    .autocomplete-list.open { display: block; }
+    .autocomplete-item {
+      padding: 10px 14px;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: background 0.12s;
+    }
+    .autocomplete-item:hover, .autocomplete-item.active { background: var(--offwhite); }
+    .autocomplete-item img { width: 30px; height: 30px; object-fit: contain; }
+    .autocomplete-item .dex-num { font-size: 11px; color: var(--gray); font-weight: 600; }
+    .autocomplete-item .rarity-pill {
+      margin-left: auto;
+      font-size: 10px;
+      font-weight: 800;
+      padding: 2px 7px;
+      border-radius: 20px;
+      white-space: nowrap;
+    }
+
+    /* ── RARITY COLORS ── */
+    .rarity-Common      { background: #e0e0e0; color: #444; }
+    .rarity-Uncommon    { background: #a0c840; color: #1a3a00; }
+    .rarity-Rare        { background: #4090e0; color: #fff; }
+    .rarity-VeryRare    { background: #9040d0; color: #fff; }
+    .rarity-ExtremelyRare { background: #e04020; color: #fff; }
+    .rarity-Legendary   { background: linear-gradient(135deg, #f7c948, #e07820); color: #fff; }
+
+    /* ── TYPE BADGE ── */
+    .type-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 5px;
+      font-size: 11px;
+      font-weight: 800;
+      color: white;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .type-normal    { background: #9a9a6a; }
+    .type-fire      { background: #e8602a; }
+    .type-water     { background: #4878e8; }
+    .type-electric  { background: #d4a800; color: #fff; }
+    .type-grass     { background: #58a028; }
+    .type-ice       { background: #4aacac; }
+    .type-fighting  { background: #b02020; }
+    .type-poison    { background: #8c2a8c; }
+    .type-ground    { background: #b07820; }
+    .type-flying    { background: #7060d8; }
+    .type-psychic   { background: #e0206a; }
+    .type-bug       { background: #7a8c08; }
+    .type-rock      { background: #9a7820; }
+    .type-ghost     { background: #5a3a80; }
+    .type-dragon    { background: #4818e0; }
+    .type-dark      { background: #4a3828; }
+    .type-steel     { background: #8888b0; }
+    .type-fairy     { background: #d8609a; }
+
+    .divider {
+      border: none;
+      border-top: 2px dashed #d0d8ee;
+      margin: 24px 0;
+    }
+
+    /* ── RESULTS ── */
+    #results { display: none; }
+    #results.visible { display: block; }
+
+    .selected-info {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 20px;
+      padding: 14px 18px;
+      background: linear-gradient(135deg, var(--blue) 0%, var(--blue-dark) 100%);
+      border-radius: 14px;
+      color: white;
+    }
+    .selected-sprite {
+      width: 72px; height: 72px;
+      object-fit: contain;
+      image-rendering: pixelated;
+      filter: drop-shadow(0 2px 8px rgba(0,0,0,0.5));
+    }
+    .selected-name {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 12px;
+      line-height: 1.8;
+    }
+    .selected-meta {
+      font-size: 13px;
+      color: rgba(255,255,255,0.85);
+      font-weight: 600;
+      margin-top: 6px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+    }
+    .rarity-tag {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+    }
+
+    /* ── TYPE GROUP SECTIONS ── */
+    .type-group-section { margin-bottom: 24px; }
+    .type-group-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+      padding: 10px 16px;
+      border-radius: 10px;
+      color: white;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 9px;
+    }
+    .type-count {
+      margin-left: auto;
+      font-family: 'Nunito', sans-serif;
+      font-size: 13px;
+      font-weight: 800;
+      background: rgba(255,255,255,0.25);
+      padding: 2px 8px;
+      border-radius: 20px;
+    }
+
+    /* Type header bg colors */
+    .th-normal    { background: linear-gradient(135deg, #9a9a6a, #6a6a40); }
+    .th-fire      { background: linear-gradient(135deg, #e8602a, #b03010); }
+    .th-water     { background: linear-gradient(135deg, #4878e8, #2848b8); }
+    .th-electric  { background: linear-gradient(135deg, #d4a800, #a07800); }
+    .th-grass     { background: linear-gradient(135deg, #58a028, #387010); }
+    .th-ice       { background: linear-gradient(135deg, #4aacac, #287878); }
+    .th-fighting  { background: linear-gradient(135deg, #b02020, #780808); }
+    .th-poison    { background: linear-gradient(135deg, #8c2a8c, #5c0a5c); }
+    .th-ground    { background: linear-gradient(135deg, #b07820, #805000); }
+    .th-flying    { background: linear-gradient(135deg, #7060d8, #4838a8); }
+    .th-psychic   { background: linear-gradient(135deg, #e0206a, #a80040); }
+    .th-bug       { background: linear-gradient(135deg, #7a8c08, #4a5c00); }
+    .th-rock      { background: linear-gradient(135deg, #9a7820, #6a5000); }
+    .th-ghost     { background: linear-gradient(135deg, #5a3a80, #381858); }
+    .th-dragon    { background: linear-gradient(135deg, #4818e0, #2800a8); }
+    .th-dark      { background: linear-gradient(135deg, #4a3828, #281808); }
+    .th-steel     { background: linear-gradient(135deg, #7878a8, #505078); }
+    .th-fairy     { background: linear-gradient(135deg, #d8609a, #a83070); }
+
+    /* ── POKEMON GRID ── */
+    .pokemon-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: 10px;
+    }
+    .pokemon-card {
+      background: var(--offwhite);
+      border: 2px solid #d8e0f0;
+      border-radius: 12px;
+      padding: 10px 8px 8px;
+      text-align: center;
+      transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+    }
+    .pokemon-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 20px rgba(40,85,174,0.2);
+      border-color: var(--blue-light);
+    }
+    .pokemon-card img {
+      width: 60px; height: 60px;
+      object-fit: contain;
+      image-rendering: pixelated;
+    }
+    .pokemon-card .pname {
+      font-size: 11px; font-weight: 800;
+      color: var(--text); line-height: 1.3;
+      margin-top: 4px; display: block;
+    }
+    .pokemon-card .pdex {
+      font-size: 10px; color: var(--gray); font-weight: 600;
+    }
+    .pokemon-card .ptypes {
+      margin-top: 4px;
+      display: flex; gap: 3px;
+      justify-content: center; flex-wrap: wrap;
+    }
+    .pokemon-card .prarity {
+      margin-top: 4px;
+      font-size: 10px; font-weight: 800;
+      padding: 1px 6px; border-radius: 10px;
+      display: inline-block;
+    }
+
+    /* ── DITTO SECTION ── */
+    .ditto-section {
+      margin-top: 28px;
+      padding: 16px 18px;
+      background: linear-gradient(135deg, #fff5fc 0%, #fde8f8 100%);
+      border: 2px dashed #d090c0;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .ditto-section img {
+      width: 64px; height: 64px;
+      object-fit: contain;
+      image-rendering: pixelated;
+    }
+    .ditto-section h4 {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 9px;
+      color: #903060;
+      margin-bottom: 6px;
+    }
+    .ditto-section p { font-size: 12px; color: #604050; font-weight: 600; }
+
+    /* ── NO RESULTS ── */
+    .no-results {
+      text-align: center;
+      padding: 32px 20px;
+      background: #f8f0ff;
+      border-radius: 14px;
+      border: 2px solid #d0a0f0;
+    }
+    .no-results .icon { font-size: 36px; margin-bottom: 12px; }
+    .no-results h3 {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 9px;
+      color: #6020a0;
+      margin-bottom: 8px;
+    }
+    .no-results p { font-size: 13px; color: #604080; font-weight: 600; }
+
+    .results-loading { text-align: center; padding: 40px; }
+    .results-loading .loader-ball { width: 40px; height: 40px; }
+
+    footer {
+      position: relative; z-index: 10;
+      text-align: center; padding: 20px;
+      color: rgba(255,255,255,0.4);
+      font-size: 11px; font-weight: 600; letter-spacing: 0.5px;
+    }
+
+    @media (max-width: 600px) {
+      .pokemon-grid { grid-template-columns: repeat(auto-fill, minmax(105px, 1fr)); }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="logo-text">PokeNexus Pre-Godot</div>
+    <h1>Breeding Compatibility Chart</h1>
+    <span class="subtitle">Original Rarities · Pre-Godot Changes</span>
+    <span class="subtitle-godot">Legacy Archive Edition</span>
+    <a class="companion-link" href="breedingstats.html">IV Breeding Calculator &rarr;</a>
+  </header>
+
+  <div class="disclaimer-banner">
+    This page is only used for determining breeding partners, not the resulting child Pokémon.
+  </div>
+
+  <main>
+    <div class="card">
+
+      <div id="loader">
+        <div class="loader-ball"></div>
+        <p>Loading Pokédex data...</p>
+      </div>
+
+      <div class="search-section" id="search-section">
+        <label class="search-label" for="pokemon-input">Choose a Pokémon</label>
+        <div class="input-wrap">
+          <input type="text" id="pokemon-input" placeholder="Start typing a name…" autocomplete="off" />
+          <img src="" alt="" class="sprite-preview" id="sprite-preview" style="display:none;" />
+          <div class="autocomplete-list" id="autocomplete-list"></div>
+        </div>
+      </div>
+
+      <hr class="divider" id="results-divider" style="display:none;" />
+      <div id="results"></div>
+
+    </div>
+  </main>
+
+  <footer>
+    Data sourced from PokéAPI · PokeNexus Pre-Godot · Legacy Archive Edition
+  </footer>
+
+<script>
+// ═══════════════════════════════════════════════
+//  RARITY DATABASE — LOWEST rarity across all locations
+//  Evo lines use lowest-rarity among explicitly-sourced members
+// ═══════════════════════════════════════════════
+// AUTO-GENERATED RARITY MAP
+const RARITY_DATA = {
+'abomasnow': 'ExtremelyRare',
+  'abra': 'VeryRare',
+  'absol': 'VeryRare',
+  'accelgor': 'Rare',
+  'aegislash': 'ExtremelyRare',
+  'aerodactyl': 'ExtremelyRare',
+  'aggron': 'Uncommon',
+  'aipom': 'Rare',
+  'alakazam': 'VeryRare',
+  'alomomola': 'Rare',
+  'altaria': 'ExtremelyRare',
+  'amaura': 'ExtremelyRare',
+  'ambipom': 'Rare',
+  'amoonguss': 'ExtremelyRare',
+  'ampharos': 'VeryRare',
+  'anorith': 'ExtremelyRare',
+  'araquanid': 'VeryRare',
+  'arbok': 'Common',
+  'arcanine': 'VeryRare',
+  'arceus': 'Legendary',
+  'archen': 'ExtremelyRare',
+  'archeops': 'ExtremelyRare',
+  'ariados': 'Uncommon',
+  'armaldo': 'ExtremelyRare',
+  'aromatisse': 'ExtremelyRare',
+  'aron': 'Uncommon',
+  'articuno': 'Legendary',
+  'audino': 'Rare',
+  'aurorus': 'ExtremelyRare',
+  'avalugg': 'VeryRare',
+  'axew': 'ExtremelyRare',
+  'azelf': 'Legendary',
+  'azumarill': 'Uncommon',
+  'azurill': 'Uncommon',
+  'bagon': 'ExtremelyRare',
+  'baltoy': 'Uncommon',
+  'banette': 'VeryRare',
+  'barbaracle': 'VeryRare',
+  'barboach': 'Common',
+  'basculin': 'Rare',
+  'bastiodon': 'ExtremelyRare',
+  'bayleef': 'ExtremelyRare',
+  'beartic': 'VeryRare',
+  'beautifly': 'Common',
+  'beedrill': 'Common',
+  'beheeyem': 'Rare',
+  'beldum': 'ExtremelyRare',
+  'bellossom': 'Uncommon',
+  'bellsprout': 'Uncommon',
+  'bergmite': 'VeryRare',
+  'bewear': 'Rare',
+  'bibarel': 'Common',
+  'bidoof': 'Common',
+  'binacle': 'VeryRare',
+  'bisharp': 'ExtremelyRare',
+  'blacephalon': 'ExtremelyRare',
+  'blastoise': 'ExtremelyRare',
+  'blaziken': 'ExtremelyRare',
+  'blissey': 'VeryRare',
+  'blitzle': 'Rare',
+  'boldore': 'VeryRare',
+  'bonsly': 'ExtremelyRare',
+  'bouffalant': 'Rare',
+  'bounsweet': 'VeryRare',
+  'braixen': 'ExtremelyRare',
+  'braviary': 'VeryRare',
+  'breloom': 'Rare',
+  'brionne': 'ExtremelyRare',
+  'bronzong': 'ExtremelyRare',
+  'bronzor': 'ExtremelyRare',
+  'bruxish': 'Rare',
+  'budew': 'ExtremelyRare',
+  'buizel': 'VeryRare',
+  'bulbasaur': 'ExtremelyRare',
+  'buneary': 'Rare',
+  'bunnelby': 'Rare',
+  'burmy': 'Rare',
+  'butterfree': 'Common',
+  'buzzwole': 'ExtremelyRare',
+  'cacnea': 'Common',
+  'cacturne': 'Common',
+  'camerupt': 'ExtremelyRare',
+  'carbink': 'Rare',
+  'carnivine': 'Rare',
+  'carracosta': 'ExtremelyRare',
+  'carvanha': 'VeryRare',
+  'cascoon': 'Common',
+  'castform': 'Rare',
+  'caterpie': 'Common',
+  'celebi': 'Legendary',
+  'celesteela': 'ExtremelyRare',
+  'chandelure': 'ExtremelyRare',
+  'chansey': 'VeryRare',
+  'charizard': 'ExtremelyRare',
+  'charjabug': 'Uncommon',
+  'charmander': 'ExtremelyRare',
+  'charmeleon': 'ExtremelyRare',
+  'chatot': 'Rare',
+  'cherrim': 'Uncommon',
+  'cherubi': 'Uncommon',
+  'chesnaught': 'ExtremelyRare',
+  'chespin': 'ExtremelyRare',
+  'chikorita': 'ExtremelyRare',
+  'chimchar': 'ExtremelyRare',
+  'chimecho': 'Rare',
+  'chinchou': 'VeryRare',
+  'chingling': 'Rare',
+  'cinccino': 'Rare',
+  'clamperl': 'VeryRare',
+  'clauncher': 'VeryRare',
+  'clawitzer': 'VeryRare',
+  'claydol': 'Uncommon',
+  'clefable': 'VeryRare',
+  'clefairy': 'VeryRare',
+  'cleffa': 'VeryRare',
+  'cloyster': 'Rare',
+  'cobalion': 'Legendary',
+  'cofagrigus': 'Rare',
+  'combee': 'Uncommon',
+  'combusken': 'ExtremelyRare',
+  'comfey': 'Rare',
+  'conkeldurr': 'VeryRare',
+  'corphish': 'Rare',
+  'corsola': 'VeryRare',
+  'cosmoem': 'Legendary',
+  'cosmog': 'Legendary',
+  'cottonee': 'Rare',
+  'crabominable': 'Common',
+  'crabrawler': 'Common',
+  'cradily': 'ExtremelyRare',
+  'cranidos': 'ExtremelyRare',
+  'crawdaunt': 'Rare',
+  'cresselia': 'Legendary',
+  'croagunk': 'VeryRare',
+  'crobat': 'Common',
+  'croconaw': 'ExtremelyRare',
+  'crustle': 'Uncommon',
+  'cryogonal': 'Rare',
+  'cubchoo': 'VeryRare',
+  'cubone': 'VeryRare',
+  'cutiefly': 'Uncommon',
+  'cyndaquil': 'ExtremelyRare',
+  'darkrai': 'Legendary',
+  'darmanitan': 'ExtremelyRare',
+  'dartrix': 'ExtremelyRare',
+  'darumaka': 'ExtremelyRare',
+  'decidueye': 'ExtremelyRare',
+  'dedenne': 'Rare',
+  'deerling': 'Rare',
+  'deino': 'ExtremelyRare',
+  'delcatty': 'Rare',
+  'delibird': 'Rare',
+  'delphox': 'ExtremelyRare',
+  'deoxys': 'Legendary',
+  'dewgong': 'Common',
+  'dewott': 'ExtremelyRare',
+  'dewpider': 'VeryRare',
+  'dhelmise': 'ExtremelyRare',
+  'dialga': 'Legendary',
+  'diancie': 'Legendary',
+  'diggersby': 'Rare',
+  'diglett': 'Common',
+  'diglett-alola': 'Common',
+  'ditto': 'VeryRare',
+  'dodrio': 'VeryRare',
+  'doduo': 'VeryRare',
+  'donphan': 'VeryRare',
+  'doublade': 'ExtremelyRare',
+  'dragalge': 'VeryRare',
+  'dragonair': 'ExtremelyRare',
+  'dragonite': 'ExtremelyRare',
+  'drampa': 'Rare',
+  'drapion': 'ExtremelyRare',
+  'dratini': 'ExtremelyRare',
+  'drifblim': 'Uncommon',
+  'drifloon': 'Uncommon',
+  'drilbur': 'VeryRare',
+  'drowzee': 'Rare',
+  'druddigon': 'ExtremelyRare',
+  'ducklett': 'Uncommon',
+  'dugtrio': 'Common',
+  'dugtrio-alola': 'Common',
+  'dunsparce': 'Rare',
+  'duosion': 'ExtremelyRare',
+  'durant': 'VeryRare',
+  'dusclops': 'ExtremelyRare',
+  'dusknoir': 'ExtremelyRare',
+  'duskull': 'ExtremelyRare',
+  'dustox': 'Common',
+  'dwebble': 'Uncommon',
+  'eelektrik': 'Rare',
+  'eelektross': 'Rare',
+  'eevee': 'ExtremelyRare',
+  'ekans': 'Common',
+  'electabuzz': 'VeryRare',
+  'electivire': 'VeryRare',
+  'electrike': 'VeryRare',
+  'electrode': 'Common',
+  'elekid': 'VeryRare',
+  'elgyem': 'Rare',
+  'emboar': 'ExtremelyRare',
+  'emolga': 'Uncommon',
+  'empoleon': 'ExtremelyRare',
+  'entei': 'Legendary',
+  'escavalier': 'Rare',
+  'espeon': 'ExtremelyRare',
+  'espurr': 'Rare',
+  'excadrill': 'VeryRare',
+  'exeggcute': 'VeryRare',
+  'exeggutor': 'VeryRare',
+  'exeggutor-alola': 'VeryRare',
+  'exploud': 'Common',
+  'farfetch-d': 'VeryRare',
+  'farfetchd': 'VeryRare',
+  'fearow': 'Common',
+  'feebas': 'ExtremelyRare',
+  'fennekin': 'ExtremelyRare',
+  'feraligatr': 'ExtremelyRare',
+  'ferroseed': 'VeryRare',
+  'ferrothorn': 'VeryRare',
+  'finneon': 'Common',
+  'flaaffy': 'VeryRare',
+  'flabebe': 'ExtremelyRare',
+  'flareon': 'ExtremelyRare',
+  'fletchinder': 'ExtremelyRare',
+  'fletchling': 'ExtremelyRare',
+  'floatzel': 'VeryRare',
+  'floette': 'ExtremelyRare',
+  'florges': 'ExtremelyRare',
+  'flygon': 'VeryRare',
+  'fomantis': 'Rare',
+  'foongus': 'ExtremelyRare',
+  'forretress': 'Rare',
+  'fraxure': 'ExtremelyRare',
+  'frillish': 'VeryRare',
+  'froakie': 'ExtremelyRare',
+  'frogadier': 'ExtremelyRare',
+  'froslass': 'ExtremelyRare',
+  'furfrou': 'Rare',
+  'furret': 'Uncommon',
+  'gabite': 'ExtremelyRare',
+  'gallade': 'VeryRare',
+  'galvantula': 'Rare',
+  'garbodor': 'VeryRare',
+  'garchomp': 'ExtremelyRare',
+  'gardevoir': 'VeryRare',
+  'gastly': 'Common',
+  'gastrodon': 'Uncommon',
+  'genesect': 'Legendary',
+  'gengar': 'Common',
+  'geodude': 'Common',
+  'geodude-alola': 'Common',
+  'gible': 'ExtremelyRare',
+  'gigalith': 'VeryRare',
+  'girafarig': 'VeryRare',
+  'giratina': 'Legendary',
+  'glaceon': 'ExtremelyRare',
+  'glalie': 'ExtremelyRare',
+  'glameow': 'Rare',
+  'gligar': 'ExtremelyRare',
+  'gliscor': 'ExtremelyRare',
+  'gloom': 'Uncommon',
+  'gogoat': 'Rare',
+  'golbat': 'Common',
+  'goldeen': 'Common',
+  'golduck': 'Common',
+  'golem': 'Common',
+  'golem-alola': 'Common',
+  'golett': 'ExtremelyRare',
+  'golisopod': 'Rare',
+  'golurk': 'ExtremelyRare',
+  'goodra': 'ExtremelyRare',
+  'goomy': 'ExtremelyRare',
+  'gorebyss': 'VeryRare',
+  'gothita': 'VeryRare',
+  'gothitelle': 'VeryRare',
+  'gothorita': 'VeryRare',
+  'gourgeist': 'Rare',
+  'granbull': 'Rare',
+  'graveler': 'Common',
+  'graveler-alola': 'Common',
+  'greninja': 'ExtremelyRare',
+  'grimer': 'Rare',
+  'grimer-alola': 'Rare',
+  'grotle': 'ExtremelyRare',
+  'groudon': 'Legendary',
+  'grovyle': 'ExtremelyRare',
+  'growlithe': 'VeryRare',
+  'grubbin': 'Uncommon',
+  'grumpig': 'VeryRare',
+  'gulpin': 'Rare',
+  'gumshoos': 'Common',
+  'gurdurr': 'VeryRare',
+  'guzzlord': 'ExtremelyRare',
+  'gyarados': 'Common',
+  'hakamo-o': 'ExtremelyRare',
+  'happiny': 'VeryRare',
+  'hariyama': 'Common',
+  'haunter': 'Common',
+  'hawlucha': 'ExtremelyRare',
+  'haxorus': 'ExtremelyRare',
+  'heatmor': 'Rare',
+  'heatran': 'Legendary',
+  'heliolisk': 'ExtremelyRare',
+  'helioptile': 'ExtremelyRare',
+  'heracross': 'ExtremelyRare',
+  'herdier': 'Uncommon',
+  'hippopotas': 'ExtremelyRare',
+  'hippowdon': 'ExtremelyRare',
+  'hitmonchan': 'ExtremelyRare',
+  'hitmonlee': 'ExtremelyRare',
+  'hitmontop': 'ExtremelyRare',
+  'ho-oh': 'Legendary',
+  'honchkrow': 'VeryRare',
+  'honedge': 'ExtremelyRare',
+  'hoopa': 'Legendary',
+  'hoothoot': 'Uncommon',
+  'hoppip': 'Rare',
+  'horsea': 'Rare',
+  'houndoom': 'VeryRare',
+  'houndour': 'VeryRare',
+  'huntail': 'VeryRare',
+  'hydreigon': 'ExtremelyRare',
+  'hypno': 'Rare',
+  'igglybuff': 'Rare',
+  'illumise': 'Rare',
+  'incineroar': 'ExtremelyRare',
+  'infernape': 'ExtremelyRare',
+  'inkay': 'VeryRare',
+  'ivysaur': 'ExtremelyRare',
+  'jangmo-o': 'ExtremelyRare',
+  'jellicent': 'VeryRare',
+  'jigglypuff': 'Rare',
+  'jirachi': 'Legendary',
+  'jolteon': 'ExtremelyRare',
+  'joltik': 'Rare',
+  'jumpluff': 'Rare',
+  'jynx': 'ExtremelyRare',
+  'kabuto': 'ExtremelyRare',
+  'kabutops': 'ExtremelyRare',
+  'kadabra': 'VeryRare',
+  'kakuna': 'Common',
+  'kangaskhan': 'ExtremelyRare',
+  'karrablast': 'Rare',
+  'kartana': 'ExtremelyRare',
+  'kecleon': 'Rare',
+  'keldeo': 'Legendary',
+  'kingdra': 'Rare',
+  'kingler': 'Common',
+  'kirlia': 'VeryRare',
+  'klang': 'Common',
+  'klefki': 'ExtremelyRare',
+  'klink': 'Common',
+  'klinklang': 'Common',
+  'koffing': 'Rare',
+  'komala': 'Rare',
+  'kommo-o': 'ExtremelyRare',
+  'krabby': 'Common',
+  'kricketot': 'Uncommon',
+  'kricketune': 'Uncommon',
+  'krokorok': 'ExtremelyRare',
+  'krookodile': 'ExtremelyRare',
+  'kyogre': 'Legendary',
+  'kyurem': 'Legendary',
+  'lairon': 'Uncommon',
+  'lampent': 'ExtremelyRare',
+  'landorus': 'Legendary',
+  'lanturn': 'VeryRare',
+  'lapras': 'ExtremelyRare',
+  'larvesta': 'ExtremelyRare',
+  'larvitar': 'ExtremelyRare',
+  'latias': 'Legendary',
+  'latios': 'Legendary',
+  'leafeon': 'ExtremelyRare',
+  'leavanny': 'Rare',
+  'ledian': 'Uncommon',
+  'ledyba': 'Uncommon',
+  'lickilicky': 'ExtremelyRare',
+  'lickitung': 'ExtremelyRare',
+  'liepard': 'Uncommon',
+  'lileep': 'ExtremelyRare',
+  'lilligant': 'Rare',
+  'lillipup': 'Uncommon',
+  'linoone': 'Common',
+  'litleo': 'Common',
+  'litten': 'ExtremelyRare',
+  'litwick': 'ExtremelyRare',
+  'lombre': 'Uncommon',
+  'lopunny': 'Rare',
+  'lotad': 'Uncommon',
+  'loudred': 'Common',
+  'lucario': 'ExtremelyRare',
+  'ludicolo': 'Uncommon',
+  'lugia': 'Legendary',
+  'lumineon': 'Common',
+  'lunala': 'Legendary',
+  'lunatone': 'Rare',
+  'lurantis': 'Rare',
+  'luvdisc': 'Common',
+  'luxio': 'Rare',
+  'luxray': 'Rare',
+  'lycanroc': 'Rare',
+  'machamp': 'ExtremelyRare',
+  'machoke': 'ExtremelyRare',
+  'machop': 'ExtremelyRare',
+  'magby': 'VeryRare',
+  'magcargo': 'Common',
+  'magearna': 'Legendary',
+  'magikarp': 'Common',
+  'magmar': 'VeryRare',
+  'magmortar': 'VeryRare',
+  'magnemite': 'Rare',
+  'magneton': 'Rare',
+  'magnezone': 'Rare',
+  'makuhita': 'Common',
+  'malamar': 'VeryRare',
+  'mamoswine': 'ExtremelyRare',
+  'manaphy': 'Legendary',
+  'mandibuzz': 'VeryRare',
+  'manectric': 'VeryRare',
+  'mankey': 'Rare',
+  'mantine': 'VeryRare',
+  'mantyke': 'VeryRare',
+  'maractus': 'VeryRare',
+  'mareanie': 'ExtremelyRare',
+  'mareep': 'VeryRare',
+  'marill': 'Uncommon',
+  'marowak': 'VeryRare',
+  'marowak-alola': 'VeryRare',
+  'marshadow': 'Legendary',
+  'marshtomp': 'ExtremelyRare',
+  'masquerain': 'Uncommon',
+  'mawile': 'ExtremelyRare',
+  'medicham': 'Rare',
+  'meditite': 'Rare',
+  'meganium': 'ExtremelyRare',
+  'meloetta': 'Legendary',
+  'meowstic': 'Rare',
+  'meowth': 'Uncommon',
+  'meowth-alola': 'Uncommon',
+  'mesprit': 'Legendary',
+  'metagross': 'ExtremelyRare',
+  'metang': 'ExtremelyRare',
+  'metapod': 'Common',
+  'mew': 'Legendary',
+  'mewtwo': 'Legendary',
+  'mienfoo': 'VeryRare',
+  'mienshao': 'VeryRare',
+  'mightyena': 'Common',
+  'milotic': 'ExtremelyRare',
+  'miltank': 'VeryRare',
+  'mime-jr': 'ExtremelyRare',
+  'mimikyu': 'ExtremelyRare',
+  'minccino': 'Rare',
+  'minior': 'ExtremelyRare',
+  'minun': 'Rare',
+  'misdreavus': 'Rare',
+  'mismagius': 'Rare',
+  'moltres': 'Legendary',
+  'monferno': 'ExtremelyRare',
+  'morelull': 'Common',
+  'mothim': 'Rare',
+  'mr-mime': 'ExtremelyRare',
+  'mrmime': 'ExtremelyRare',
+  'mudbray': 'Rare',
+  'mudkip': 'ExtremelyRare',
+  'mudsdale': 'Rare',
+  'muk': 'Rare',
+  'muk-alola': 'Rare',
+  'munchlax': 'ExtremelyRare',
+  'munna': 'Rare',
+  'murkrow': 'VeryRare',
+  'musharna': 'Rare',
+  'naganadel': 'ExtremelyRare',
+  'natu': 'VeryRare',
+  'necrozma': 'Legendary',
+  'nidoking': 'Common',
+  'nidoqueen': 'Common',
+  'nidoran-f': 'Common',
+  'nidoran-m': 'Common',
+  'nidoranf': 'Common',
+  'nidoranm': 'Common',
+  'nidorina': 'Common',
+  'nidorino': 'Common',
+  'nihilego': 'ExtremelyRare',
+  'nincada': 'Rare',
+  'ninetales': 'VeryRare',
+  'ninetales-alola': 'VeryRare',
+  'ninjask': 'Rare',
+  'noctowl': 'Uncommon',
+  'noibat': 'ExtremelyRare',
+  'noivern': 'ExtremelyRare',
+  'nosepass': 'VeryRare',
+  'numel': 'ExtremelyRare',
+  'nuzleaf': 'Uncommon',
+  'octillery': 'Rare',
+  'oddish': 'Uncommon',
+  'omanyte': 'ExtremelyRare',
+  'omastar': 'ExtremelyRare',
+  'onix': 'ExtremelyRare',
+  'oranguru': 'VeryRare',
+  'oricorio': 'Rare',
+  'oshawott': 'ExtremelyRare',
+  'pachirisu': 'Rare',
+  'palkia': 'Legendary',
+  'palossand': 'Common',
+  'palpitoad': 'Rare',
+  'pancham': 'ExtremelyRare',
+  'pangoro': 'ExtremelyRare',
+  'panpour': 'Rare',
+  'pansage': 'Rare',
+  'pansear': 'Rare',
+  'paras': 'Common',
+  'parasect': 'Common',
+  'passimian': 'VeryRare',
+  'patrat': 'Common',
+  'pawniard': 'ExtremelyRare',
+  'pelipper': 'Uncommon',
+  'persian': 'Uncommon',
+  'persian-alola': 'Uncommon',
+  'petilil': 'Rare',
+  'phanpy': 'VeryRare',
+  'phantump': 'Rare',
+  'pheromosa': 'ExtremelyRare',
+  'phione': 'ExtremelyRare',
+  'pichu': 'Rare',
+  'pidgeot': 'Common',
+  'pidgeotto': 'Common',
+  'pidgey': 'Common',
+  'pidove': 'Common',
+  'pignite': 'ExtremelyRare',
+  'pikachu': 'Rare',
+  'pikipek': 'Common',
+  'piloswine': 'ExtremelyRare',
+  'pineco': 'Rare',
+  'pinsir': 'ExtremelyRare',
+  'piplup': 'ExtremelyRare',
+  'plusle': 'Rare',
+  'poipole': 'ExtremelyRare',
+  'politoed': 'Common',
+  'poliwag': 'Common',
+  'poliwhirl': 'Common',
+  'poliwrath': 'Common',
+  'ponyta': 'Uncommon',
+  'poochyena': 'Common',
+  'popplio': 'ExtremelyRare',
+  'porygon': 'ExtremelyRare',
+  'porygon-z': 'ExtremelyRare',
+  'porygon2': 'ExtremelyRare',
+  'primarina': 'ExtremelyRare',
+  'primeape': 'Rare',
+  'prinplup': 'ExtremelyRare',
+  'probopass': 'VeryRare',
+  'psyduck': 'Common',
+  'pumpkaboo': 'Rare',
+  'pupitar': 'ExtremelyRare',
+  'purrloin': 'Uncommon',
+  'purugly': 'Rare',
+  'pyroar': 'Common',
+  'pyukumuku': 'Rare',
+  'quagsire': 'Uncommon',
+  'quilava': 'ExtremelyRare',
+  'quilladin': 'ExtremelyRare',
+  'qwilfish': 'Rare',
+  'raichu': 'Rare',
+  'raichu-alola': 'Rare',
+  'raikou': 'Legendary',
+  'ralts': 'VeryRare',
+  'rampardos': 'ExtremelyRare',
+  'rapidash': 'Uncommon',
+  'raticate': 'Common',
+  'raticate-alola': 'Common',
+  'rattata': 'Common',
+  'rattata-alola': 'Common',
+  'rayquaza': 'Legendary',
+  'regice': 'Legendary',
+  'regigigas': 'Legendary',
+  'regirock': 'Legendary',
+  'registeel': 'Legendary',
+  'relicanth': 'VeryRare',
+  'remoraid': 'Rare',
+  'reshiram': 'Legendary',
+  'reuniclus': 'ExtremelyRare',
+  'rhydon': 'ExtremelyRare',
+  'rhyhorn': 'ExtremelyRare',
+  'rhyperior': 'ExtremelyRare',
+  'ribombee': 'Uncommon',
+  'riolu': 'ExtremelyRare',
+  'rockruff': 'Rare',
+  'roggenrola': 'VeryRare',
+  'roselia': 'ExtremelyRare',
+  'roserade': 'ExtremelyRare',
+  'rotom': 'VeryRare',
+  'rowlet': 'ExtremelyRare',
+  'rufflet': 'VeryRare',
+  'sableye': 'VeryRare',
+  'salamence': 'ExtremelyRare',
+  'salandit': 'ExtremelyRare',
+  'salazzle': 'ExtremelyRare',
+  'samurott': 'ExtremelyRare',
+  'sandile': 'ExtremelyRare',
+  'sandshrew': 'Uncommon',
+  'sandshrew-alola': 'Uncommon',
+  'sandslash': 'Uncommon',
+  'sandslash-alola': 'Uncommon',
+  'sandygast': 'Common',
+  'sawk': 'Rare',
+  'sawsbuck': 'Rare',
+  'scatterbug': 'Uncommon',
+  'sceptile': 'ExtremelyRare',
+  'scizor': 'ExtremelyRare',
+  'scolipede': 'Rare',
+  'scrafty': 'Rare',
+  'scraggy': 'Rare',
+  'scyther': 'ExtremelyRare',
+  'seadra': 'Rare',
+  'seaking': 'Common',
+  'sealeo': 'ExtremelyRare',
+  'seedot': 'Uncommon',
+  'seel': 'Common',
+  'seismitoad': 'Rare',
+  'sentret': 'Uncommon',
+  'serperior': 'ExtremelyRare',
+  'servine': 'ExtremelyRare',
+  'seviper': 'VeryRare',
+  'sewaddle': 'Rare',
+  'sharpedo': 'VeryRare',
+  'shaymin': 'Legendary',
+  'shedinja': 'Rare',
+  'shelgon': 'ExtremelyRare',
+  'shellder': 'Rare',
+  'shellos': 'Uncommon',
+  'shelmet': 'Rare',
+  'shieldon': 'ExtremelyRare',
+  'shiftry': 'Uncommon',
+  'shiinotic': 'Common',
+  'shinx': 'Rare',
+  'shroomish': 'Rare',
+  'shuckle': 'ExtremelyRare',
+  'shuppet': 'VeryRare',
+  'sigilyph': 'VeryRare',
+  'silcoon': 'Common',
+  'silvally': 'ExtremelyRare',
+  'simipour': 'Rare',
+  'simisage': 'Rare',
+  'simisear': 'Rare',
+  'skarmory': 'ExtremelyRare',
+  'skiddo': 'Rare',
+  'skiploom': 'Rare',
+  'skitty': 'Rare',
+  'skorupi': 'ExtremelyRare',
+  'skrelp': 'VeryRare',
+  'skuntank': 'Rare',
+  'slaking': 'ExtremelyRare',
+  'slakoth': 'ExtremelyRare',
+  'sliggoo': 'ExtremelyRare',
+  'slowbro': 'VeryRare',
+  'slowking': 'VeryRare',
+  'slowpoke': 'VeryRare',
+  'slugma': 'Common',
+  'slurpuff': 'ExtremelyRare',
+  'smeargle': 'Rare',
+  'smoochum': 'ExtremelyRare',
+  'sneasel': 'ExtremelyRare',
+  'snivy': 'ExtremelyRare',
+  'snorlax': 'ExtremelyRare',
+  'snorunt': 'ExtremelyRare',
+  'snover': 'ExtremelyRare',
+  'snubbull': 'Rare',
+  'solgaleo': 'Legendary',
+  'solosis': 'ExtremelyRare',
+  'solrock': 'Rare',
+  'spearow': 'Common',
+  'spewpa': 'Uncommon',
+  'spheal': 'ExtremelyRare',
+  'spinarak': 'Uncommon',
+  'spinda': 'Rare',
+  'spiritomb': 'ExtremelyRare',
+  'spoink': 'VeryRare',
+  'spritzee': 'ExtremelyRare',
+  'squirtle': 'ExtremelyRare',
+  'stakataka': 'ExtremelyRare',
+  'stantler': 'Rare',
+  'staraptor': 'Rare',
+  'staravia': 'Rare',
+  'starly': 'Rare',
+  'starmie': 'VeryRare',
+  'staryu': 'VeryRare',
+  'steelix': 'ExtremelyRare',
+  'steenee': 'VeryRare',
+  'stoutland': 'Uncommon',
+  'stufful': 'Rare',
+  'stunfisk': 'Uncommon',
+  'stunky': 'Rare',
+  'sudowoodo': 'ExtremelyRare',
+  'suicune': 'Legendary',
+  'sunflora': 'Rare',
+  'sunkern': 'Rare',
+  'surskit': 'Uncommon',
+  'swablu': 'ExtremelyRare',
+  'swadloon': 'Rare',
+  'swalot': 'Rare',
+  'swampert': 'ExtremelyRare',
+  'swanna': 'Uncommon',
+  'swellow': 'Uncommon',
+  'swinub': 'ExtremelyRare',
+  'swirlix': 'ExtremelyRare',
+  'swoobat': 'Uncommon',
+  'sylveon': 'ExtremelyRare',
+  'taillow': 'Uncommon',
+  'talonflame': 'ExtremelyRare',
+  'tangela': 'VeryRare',
+  'tangrowth': 'VeryRare',
+  'tapu-bulu': 'Legendary',
+  'tapu-fini': 'Legendary',
+  'tapu-koko': 'Legendary',
+  'tapu-lele': 'Legendary',
+  'tauros': 'VeryRare',
+  'teddiursa': 'VeryRare',
+  'tentacool': 'Common',
+  'tentacruel': 'Common',
+  'tepig': 'ExtremelyRare',
+  'terrakion': 'Legendary',
+  'throh': 'Rare',
+  'thundurus': 'Legendary',
+  'timburr': 'VeryRare',
+  'tirtouga': 'ExtremelyRare',
+  'togedemaru': 'Rare',
+  'togekiss': 'ExtremelyRare',
+  'togepi': 'ExtremelyRare',
+  'togetic': 'ExtremelyRare',
+  'torchic': 'ExtremelyRare',
+  'torkoal': 'VeryRare',
+  'tornadus': 'Legendary',
+  'torracat': 'ExtremelyRare',
+  'torterra': 'ExtremelyRare',
+  'totodile': 'ExtremelyRare',
+  'toucannon': 'Common',
+  'toxapex': 'ExtremelyRare',
+  'toxicroak': 'VeryRare',
+  'tranquill': 'Common',
+  'trapinch': 'VeryRare',
+  'treecko': 'ExtremelyRare',
+  'trevenant': 'Rare',
+  'tropius': 'ExtremelyRare',
+  'trubbish': 'VeryRare',
+  'trumbeak': 'Common',
+  'tsareena': 'VeryRare',
+  'turtonator': 'Rare',
+  'turtwig': 'ExtremelyRare',
+  'tympole': 'Rare',
+  'tynamo': 'Rare',
+  'type-null': 'ExtremelyRare',
+  'typhlosion': 'ExtremelyRare',
+  'tyranitar': 'ExtremelyRare',
+  'tyrantrum': 'ExtremelyRare',
+  'tyrogue': 'ExtremelyRare',
+  'tyrunt': 'ExtremelyRare',
+  'umbreon': 'ExtremelyRare',
+  'unfezant': 'Common',
+  'unown': 'Common',
+  'ursaring': 'VeryRare',
+  'uxie': 'Legendary',
+  'vanillish': 'VeryRare',
+  'vanillite': 'VeryRare',
+  'vanilluxe': 'VeryRare',
+  'vaporeon': 'ExtremelyRare',
+  'venipede': 'Rare',
+  'venomoth': 'Rare',
+  'venonat': 'Rare',
+  'venusaur': 'ExtremelyRare',
+  'vespiquen': 'Uncommon',
+  'vibrava': 'VeryRare',
+  'victini': 'Legendary',
+  'victreebel': 'Uncommon',
+  'vigoroth': 'ExtremelyRare',
+  'vikavolt': 'Uncommon',
+  'vileplume': 'Uncommon',
+  'virizion': 'Legendary',
+  'vivillon': 'Uncommon',
+  'volbeat': 'Rare',
+  'volcanion': 'Legendary',
+  'volcarona': 'ExtremelyRare',
+  'voltorb': 'Common',
+  'vullaby': 'VeryRare',
+  'vulpix': 'VeryRare',
+  'vulpix-alola': 'VeryRare',
+  'wailmer': 'VeryRare',
+  'wailord': 'VeryRare',
+  'walrein': 'ExtremelyRare',
+  'wartortle': 'ExtremelyRare',
+  'watchog': 'Common',
+  'weavile': 'ExtremelyRare',
+  'weedle': 'Common',
+  'weepinbell': 'Uncommon',
+  'weezing': 'Rare',
+  'whimsicott': 'Rare',
+  'whirlipede': 'Rare',
+  'whiscash': 'Common',
+  'whismur': 'Common',
+  'wigglytuff': 'Rare',
+  'wimpod': 'Rare',
+  'wingull': 'Uncommon',
+  'wishiwashi': 'Common',
+  'wobbuffet': 'VeryRare',
+  'woobat': 'Uncommon',
+  'wooper': 'Uncommon',
+  'wormadam': 'Rare',
+  'wurmple': 'Common',
+  'wynaut': 'VeryRare',
+  'xatu': 'VeryRare',
+  'xerneas': 'Legendary',
+  'xurkitree': 'ExtremelyRare',
+  'yamask': 'Rare',
+  'yanma': 'VeryRare',
+  'yanmega': 'VeryRare',
+  'yungoos': 'Common',
+  'yveltal': 'Legendary',
+  'zangoose': 'VeryRare',
+  'zapdos': 'Legendary',
+  'zebstrika': 'Rare',
+  'zekrom': 'Legendary',
+  'zeraora': 'Legendary',
+  'zigzagoon': 'Common',
+  'zoroark': 'VeryRare',
+  'zorua': 'VeryRare',
+  'zubat': 'Common',
+  'zweilous': 'ExtremelyRare',
+  'zygarde': 'Legendary',
+};
+
+// Total entries: 808
+
+// SUMMARY BY RARITY:
+// Common (112): arbok, barboach, beautifly, beedrill, bibarel, bidoof, butterfree, cacnea, cacturne, cascoon, caterpie, crabominable, crabrawler, crobat, dewgong, diglett, diglett-alola, dugtrio, dugtrio-alola, dustox...
+// Uncommon (83): aggron, ariados, aron, azumarill, azurill, baltoy, bellossom, bellsprout, camerupt, charjabug, cherrim, cherubi, claydol, combee, crustle, cutiefly, drifblim, drifloon, ducklett, dwebble...
+// Rare (170): accelgor, aipom, alomomola, ambipom, audino, basculin, beheeyem, bewear, blitzle, bouffalant, breloom, bruxish, buneary, bunnelby, burmy, carbink, carnivine, castform, chatot, chimecho...
+// VeryRare (153): abra, absol, alakazam, altaria, ampharos, araquanid, arcanine, avalugg, banette, barbaracle, beartic, bergmite, binacle, blissey, boldore, bounsweet, braviary, buizel, carvanha, chansey...
+// ExtremelyRare (246): abomasnow, aegislash, aerodactyl, amaura, amoonguss, anorith, archen, archeops, armaldo, aromatisse, aurorus, axew, bagon, bastiodon, bayleef, beldum, bisharp, blacephalon, blastoise, blaziken...
+// Legendary (65): arceus, articuno, azelf, celebi, cobalion, cosmoem, cosmog, cresselia, darkrai, deoxys, dialga, diancie, entei, genesect, giratina, groudon, heatran, ho-oh, hoopa, jirachi...
+
+function getRarity(pokemonName) {
+  const name = pokemonName.toLowerCase();
+  if (RARITY_DATA[name]) return RARITY_DATA[name];
+  const base = name.split('-')[0];
+  if (RARITY_DATA[base]) return RARITY_DATA[base];
+  return 'Common';
+}
+const RARITY_ORDER = ['Common','Uncommon','Rare','VeryRare','ExtremelyRare','Legendary'];
+
+// Genderless pokemon — breed with any Pokémon in their own evolution line
+// (not just the exact same species/stage); Ditto OK if VeryRare or lower.
+// Each inner array is one evolution family (or lone species with no line).
+const GENDERLESS_FAMILIES = [
+  // Gen 1
+  ['magnemite','magneton','magnezone'],
+  ['voltorb','electrode'],
+  ['staryu','starmie'],
+  ['porygon','porygon2','porygon-z'],
+  // Gen 2
+  ['unown'],
+  ['lunatone'],
+  ['solrock'],
+  ['shedinja'],
+  // Gen 3
+  ['baltoy','claydol'],
+  ['beldum','metang','metagross'],
+  ['bronzor','bronzong'],
+  // Gen 4
+  ['rotom','rotom-heat','rotom-wash','rotom-frost','rotom-fan','rotom-mow'],
+  ['phione'],
+  // Gen 5
+  ['klink','klang','klinklang'],
+  ['cryogonal'],
+  ['golett','golurk'],
+  // Gen 6
+  ['carbink'],
+  ['klefki'],
+  // Gen 7
+  ['minior'],
+  ['dhelmise'],
+  ['komala'],
+  ['type-null','silvally'],
+  // Ultra Beasts (Gen 7) — genderless like everything else in this set.
+  // Poipole/Naganadel are the one evolution line among them; the rest are
+  // each their own single-species family. Being genderless, they follow the
+  // normal genderless rules: breed with any same-rarity/same-type Pokémon
+  // (egg is always the Ultra Beast's species), can't breed with other
+  // genderless Pokémon (Ultra Beasts included) outside their own family,
+  // and never breed with Ditto (they're ExtremelyRare, above Ditto's max
+  // rarity anyway).
+  ['nihilego'],
+  ['buzzwole'],
+  ['pheromosa'],
+  ['xurkitree'],
+  ['celesteela'],
+  ['kartana'],
+  ['guzzlord'],
+  ['poipole','naganadel'],
+  ['stakataka'],
+  ['blacephalon'],
+];
+const GENDERLESS = new Set(GENDERLESS_FAMILIES.flat());
+function genderlessFamily(name) {
+  return GENDERLESS_FAMILIES.find(fam => fam.includes(name)) || [name];
+}
+
+// Ditto can only breed with VeryRare or lower (not ExtremelyRare)
+const DITTO_MAX_RARITY = 'VeryRare';
+
+const RARITY_LABEL = {
+  'Common':        'Common',
+  'Uncommon':      'Uncommon',
+  'Rare':          'Rare',
+  'VeryRare':      'Very Rare',
+  'ExtremelyRare': 'Extremely Rare',
+  'Legendary':     'Legendary'
+};
+
+// ═══════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════
+const MAX_DEX = 807;
+let speciesDB  = {};   // id -> { name, displayName, types[], rarity }
+let pokemonList = [];  // [{id, name, displayName}] sorted by id
+let typeMap = {};      // type -> Set<id>
+
+let selectedId = null;
+
+// ═══════════════════════════════════════════════
+//  LOAD DATA
+// ═══════════════════════════════════════════════
+function fetchWithTimeout(url, ms = 15000) {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), ms);
+  return fetch(url, { signal: controller.signal })
+    .then(r => { clearTimeout(id); return r.json(); })
+    .catch(e => { clearTimeout(id); throw e; });
+}
+
+async function loadAllData() {
+  // Update loader message
+  document.querySelector('#loader p').textContent = 'Connecting to PokéAPI...';
+
+  // Fetch all species list (#1-807)
+  const speciesList = await fetchWithTimeout('https://pokeapi.co/api/v2/pokemon-species?limit=807&offset=0', 20000);
+
+  // Build basic list
+  pokemonList = [];
+  for (const sp of speciesList.results) {
+    const id = parseInt(sp.url.split('/').filter(Boolean).pop());
+    if (id < 1 || id > MAX_DEX) continue;
+    const display = toDisplayName(sp.name);
+    pokemonList.push({ id, name: sp.name, displayName: display });
+    speciesDB[id] = {
+      name: sp.name,
+      displayName: display,
+      types: [],
+      rarity: getRarity(sp.name)
+    };
+  }
+  pokemonList.sort((a,b) => a.id - b.id);
+
+  // ── Custom variant forms (hardcoded types, not in PokeAPI base list) ──
+  // Sprite URL pattern for named forms: sprites/pokemon/[form-id].png where known,
+  // or official-artwork by name. PokeAPI form IDs for Alolans start at 10001+.
+  const CUSTOM_VARIANTS = [
+    // ── Rotom forms — VeryRare, Electric + secondary type ──
+    { id: 10008, name: 'rotom-heat',  displayName: 'Rotom-Heat',  types: ['electric','fire'],    rarity: 'VeryRare' },
+    { id: 10009, name: 'rotom-wash',  displayName: 'Rotom-Wash',  types: ['electric','water'],   rarity: 'VeryRare' },
+    { id: 10010, name: 'rotom-frost', displayName: 'Rotom-Frost', types: ['electric','ice'],     rarity: 'VeryRare' },
+    { id: 10011, name: 'rotom-fan',   displayName: 'Rotom-Fan',   types: ['electric','flying'],  rarity: 'VeryRare' },
+    { id: 10012, name: 'rotom-mow',   displayName: 'Rotom-Mow',   types: ['electric','grass'],   rarity: 'VeryRare' },
+    // ── Oricorio variants — Rare, Flying + secondary type ──
+    { id: 10124, name: 'oricorio-pau',    displayName: "Oricorio-Pa'u",   types: ['psychic','flying'],  rarity: 'Rare' },
+    { id: 10123, name: 'oricorio-pompom', displayName: 'Oricorio-Pom-Pom', types: ['electric','flying'], rarity: 'Rare' },
+    { id: 10125, name: 'oricorio-sensu',  displayName: 'Oricorio-Sensu',   types: ['ghost','flying'],    rarity: 'Rare' },
+    // ── Alolan forms (PokeAPI ids verified against pokeapi.co/api/v2/pokemon) ──
+    { id: 10091, name: 'rattata-alola',   displayName: 'Rattata-Alola',   types: ['dark','normal'],     rarity: 'Common' },
+    { id: 10092, name: 'raticate-alola',  displayName: 'Raticate-Alola',  types: ['dark','normal'],     rarity: 'Common' },
+    { id: 10100, name: 'raichu-alola',    displayName: 'Raichu-Alola',    types: ['electric','psychic'], rarity: 'Rare' },
+    { id: 10101, name: 'sandshrew-alola', displayName: 'Sandshrew-Alola', types: ['ice','steel'],       rarity: 'Uncommon' },
+    { id: 10102, name: 'sandslash-alola', displayName: 'Sandslash-Alola', types: ['ice','steel'],       rarity: 'Uncommon' },
+    { id: 10103, name: 'vulpix-alola',    displayName: 'Vulpix-Alola',    types: ['ice'],               rarity: 'VeryRare' },
+    { id: 10104, name: 'ninetales-alola', displayName: 'Ninetales-Alola', types: ['ice','fairy'],       rarity: 'VeryRare' },
+    { id: 10105, name: 'diglett-alola',   displayName: 'Diglett-Alola',   types: ['ground','steel'],    rarity: 'Common' },
+    { id: 10106, name: 'dugtrio-alola',   displayName: 'Dugtrio-Alola',   types: ['ground','steel'],    rarity: 'Common' },
+    { id: 10107, name: 'meowth-alola',    displayName: 'Meowth-Alola',    types: ['dark'],              rarity: 'Uncommon' },
+    { id: 10108, name: 'persian-alola',   displayName: 'Persian-Alola',   types: ['dark'],              rarity: 'Uncommon' },
+    { id: 10109, name: 'geodude-alola',   displayName: 'Geodude-Alola',   types: ['rock','electric'],   rarity: 'Common' },
+    { id: 10110, name: 'graveler-alola',  displayName: 'Graveler-Alola',  types: ['rock','electric'],   rarity: 'Common' },
+    { id: 10111, name: 'golem-alola',     displayName: 'Golem-Alola',     types: ['rock','electric'],   rarity: 'Common' },
+    { id: 10112, name: 'grimer-alola',    displayName: 'Grimer-Alola',    types: ['poison','dark'],     rarity: 'Rare' },
+    { id: 10113, name: 'muk-alola',       displayName: 'Muk-Alola',       types: ['poison','dark'],     rarity: 'Rare' },
+    { id: 10114, name: 'exeggutor-alola', displayName: 'Exeggutor-Alola', types: ['grass','dragon'],    rarity: 'VeryRare' },
+    { id: 10115, name: 'marowak-alola',   displayName: 'Marowak-Alola',   types: ['fire','ghost'],      rarity: 'VeryRare' },
+  ];
+  for (const v of CUSTOM_VARIANTS) {
+    pokemonList.push(v);
+    speciesDB[v.id] = v;
+    for (const t of v.types) {
+      if (!typeMap[t]) typeMap[t] = new Set();
+      typeMap[t].add(v.id);
+    }
+    RARITY_DATA[v.name] = v.rarity;
+  }
+
+  document.getElementById('loader').style.display = 'none';
+  document.getElementById('search-section').classList.add('visible');
+  initSearch();
+}
+
+function toDisplayName(name) {
+  return name.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+}
+
+// ═══════════════════════════════════════════════
+//  SEARCH / AUTOCOMPLETE
+// ═══════════════════════════════════════════════
+function initSearch() {
+  const input = document.getElementById('pokemon-input');
+  const list  = document.getElementById('autocomplete-list');
+  let activeIdx = -1;
+
+  function getSuggestions(val) {
+    const v = val.toLowerCase().trim();
+    if (!v) return [];
+    return pokemonList
+      .filter(p => p.name.includes(v) || p.displayName.toLowerCase().includes(v))
+      .slice(0, 12);
+  }
+
+  function rarityPillHtml(rarity) {
+    return `<span class="rarity-pill rarity-${rarity}">${RARITY_LABEL[rarity]}</span>`;
+  }
+
+  function renderSuggestions(items) {
+    list.innerHTML = '';
+    activeIdx = -1;
+    if (!items.length) { list.classList.remove('open'); return; }
+    items.forEach((item) => {
+      const rarity = speciesDB[item.id]?.rarity || 'Common';
+      const div = document.createElement('div');
+      div.className = 'autocomplete-item';
+      div.innerHTML = `
+        <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${item.id}.png"
+             alt="${item.displayName}" onerror="this.style.display='none'" />
+        <span>${item.displayName}</span>
+        <span class="dex-num">#${String(item.id).padStart(3,'0')}</span>
+        ${rarityPillHtml(rarity)}
+      `;
+      div.addEventListener('mousedown', () => selectPokemon(item));
+      list.appendChild(div);
+    });
+    list.classList.add('open');
+  }
+
+  input.addEventListener('input', () => renderSuggestions(getSuggestions(input.value)));
+  input.addEventListener('keydown', e => {
+    const items = list.querySelectorAll('.autocomplete-item');
+    if (e.key === 'ArrowDown') {
+      activeIdx = Math.min(activeIdx + 1, items.length - 1);
+      items.forEach((el,i) => el.classList.toggle('active', i === activeIdx));
+      e.preventDefault();
+    } else if (e.key === 'ArrowUp') {
+      activeIdx = Math.max(activeIdx - 1, 0);
+      items.forEach((el,i) => el.classList.toggle('active', i === activeIdx));
+      e.preventDefault();
+    } else if (e.key === 'Enter') {
+      if (activeIdx >= 0) items[activeIdx].dispatchEvent(new MouseEvent('mousedown'));
+      e.preventDefault();
+    } else if (e.key === 'Escape') {
+      list.classList.remove('open');
+    }
+  });
+  input.addEventListener('blur',  () => setTimeout(() => list.classList.remove('open'), 150));
+  input.addEventListener('focus', () => { if (input.value) renderSuggestions(getSuggestions(input.value)); });
+}
+
+async function selectPokemon(item) {
+  selectedId = item.id;
+  document.getElementById('pokemon-input').value = item.displayName;
+  document.getElementById('autocomplete-list').classList.remove('open');
+
+  const preview = document.getElementById('sprite-preview');
+  preview.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${item.id}.png`;
+  preview.style.display = 'block';
+
+  await ensureTypesLoaded(item.id);
+  showResults();
+}
+
+async function ensureTypesLoaded(id) {
+  const sp = speciesDB[id];
+  if (sp.types.length) return;
+  try {
+    const data = await fetchWithTimeout(`https://pokeapi.co/api/v2/pokemon/${id}/`, 10000);
+    sp.types = data.types.map(t => t.type.name.toLowerCase());
+  } catch(e) {
+    sp.types = [];
+  }
+}
+
+// ═══════════════════════════════════════════════
+//  RESULTS
+// ═══════════════════════════════════════════════
+function dittoSectionHtml(sp) {
+  return `
+    <div class="ditto-section">
+      <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/132.png" alt="Ditto" />
+      <div>
+        <h4>🔮 Ditto — Always Compatible</h4>
+        <p>Ditto ignores type matching and doesn't need to share rarity — it can breed with <strong>${sp.displayName}</strong> (Very Rare or lower) regardless.<br/>
+        The egg produced will always be a <strong>${sp.displayName}</strong> (Ditto never determines the egg's species).</p>
+      </div>
+    </div>
+  `;
+}
+
+async function showResults() {
+  const resultsEl = document.getElementById('results');
+  const divider   = document.getElementById('results-divider');
+  resultsEl.style.display = 'block';
+  resultsEl.classList.add('visible');
+  divider.style.display = 'block';
+
+  const sp = speciesDB[selectedId];
+
+  // Show loading state with selected info
+  resultsEl.innerHTML = selectedInfoHtml(sp) + `
+    <div class="results-loading"><div class="loader-ball"></div></div>
+  `;
+
+  const myRarity = sp.rarity;
+  const myTypes  = sp.types; // already loaded
+
+  // Legendary pokemon cannot breed with other species — exception: same
+  // legendary species can breed together if BOTH parents are self-caught.
+  if (myRarity === 'Legendary') {
+    resultsEl.innerHTML = selectedInfoHtml(sp) + `
+      <div class="no-results">
+        <div class="icon">🚫</div>
+        <h3>Legendary — Restricted Breeding</h3>
+        <p><strong>${sp.displayName}</strong> cannot breed with any other species, and cannot breed with Ditto.</p>
+        <p style="margin-top:10px;">Exception: two <strong>${sp.displayName}</strong> can breed with each other if <u>both</u> are self-caught (not traded, gifted, or otherwise obtained) — regardless of gender. Some legendaries are locked to a single gender (e.g. Latios is always male, Latias is always female), so this is what allows two self-caught Latios, two self-caught Latias, or any other same-species pairing to breed together. Different forms of the same legendary (e.g. Giratina-Origin, Kyurem-Black) still count as the same species for this — the child simply takes the mother's form.</p>
+      </div>
+    `;
+    return;
+  }
+
+  // Ditto — ignores type matching entirely, and doesn't need to match its
+  // partner's rarity, but can only breed with Common/Uncommon/Rare/VeryRare
+  // Pokémon (never ExtremelyRare or Legendary). Two Ditto cannot breed
+  // together. The egg is always the OTHER parent's species/form.
+  if (sp.name === 'ditto') {
+    const maxIdx = RARITY_ORDER.indexOf(DITTO_MAX_RARITY);
+    const dittoMates = pokemonList.filter(p => {
+      const psp = speciesDB[p.id];
+      return p.id !== selectedId && psp && psp.name !== 'ditto' && RARITY_ORDER.indexOf(psp.rarity) <= maxIdx;
+    });
+    const byRarity = {};
+    for (const p of dittoMates) {
+      const r = speciesDB[p.id].rarity;
+      (byRarity[r] = byRarity[r] || []).push(p);
+    }
+    for (const r of Object.keys(byRarity)) byRarity[r].sort((a,b) => a.id - b.id);
+
+    let html = selectedInfoHtml(sp) + `
+      <div class="no-results" style="background:#fff0f6;border-color:#d9799a;color:#7a3350;">
+        <div class="icon">🔮</div>
+        <h3>Ditto — Universal Breeding</h3>
+        <p><strong>Ditto</strong> ignores type matching and doesn't need to share rarity with its partner — it can breed with any <strong>Common, Uncommon, Rare, or Very Rare</strong> Pokémon. It cannot breed with Extremely Rare or Legendary Pokémon, and two Ditto cannot breed together.</p>
+        <p style="margin-top:8px;">The egg is always the <em>other</em> parent's species and form — Ditto never determines the egg's identity.</p>
+      </div>
+    `;
+    for (const r of RARITY_ORDER.filter(r => byRarity[r] && byRarity[r].length)) {
+      html += `
+        <div class="type-group-section">
+          <div class="type-group-header">
+            <span class="rarity-tag rarity-${r}">${RARITY_LABEL[r]}</span>
+            Compatible Pokémon
+            <span class="type-count">${byRarity[r].length}</span>
+          </div>
+          <div class="pokemon-grid">
+            ${byRarity[r].map(m => renderPokemonCard(m)).join('')}
+          </div>
+        </div>
+      `;
+    }
+    resultsEl.innerHTML = html;
+    return;
+  }
+
+  // Genderless pokemon — can breed with any male or female Pokémon sharing
+  // rarity + a type (egg is always the genderless parent's species), and
+  // can also breed with genderless Pokémon within their own evolution line.
+  // They cannot breed with genderless Pokémon outside that line.
+  const isGenderless = GENDERLESS.has(sp.name);
+  let html = selectedInfoHtml(sp);
+  let genderlessFamilyMates = [];
+
+  if (isGenderless) {
+    html += `
+      <div class="no-results" style="background:#f0f4ff;border-color:#99b;color:#445;">
+        <div class="icon">⚧</div>
+        <h3>Genderless Breeding Rules</h3>
+        <p><strong>${sp.displayName}</strong> is genderless. It can breed with any male or female Pokémon that shares its rarity and a type (shown below) — the egg will always be a <strong>${sp.displayName}</strong>, since a genderless parent is always treated as the mother.</p>
+        <p style="margin-top:8px;">It can also breed with other genderless Pokémon, but only within its own evolution line (shown below if any). It cannot breed with genderless Pokémon outside that line.</p>
+      </div>
+    `;
+
+    const family = genderlessFamily(sp.name);
+    genderlessFamilyMates = pokemonList.filter(p => p.id !== selectedId && family.includes(speciesDB[p.id]?.name));
+    if (genderlessFamilyMates.length) {
+      html += `
+        <div class="type-group-section">
+          <div class="type-group-header">
+            <span class="type-badge" style="background:#667;color:#fff;">⚧ Genderless</span>
+            Same Evolution Line
+            <span class="type-count">${genderlessFamilyMates.length}</span>
+          </div>
+          <div class="pokemon-grid">
+            ${genderlessFamilyMates.map(m => renderPokemonCard(m)).join('')}
+          </div>
+        </div>
+      `;
+    }
+  }
+
+  // Find all pokemon sharing same rarity AND at least one type.
+  // Genderless-selected: exclude every OTHER genderless species (its own
+  // family is handled separately above; other genderless species can't
+  // pair with it per the rule above).
+  // Non-genderless-selected: genderless candidates ARE included here since
+  // they can breed with any same-rarity/type Pokémon — marked with * below.
+  // We need to batch-load types for all same-rarity pokemon we don't have yet
+  const sameRarity = pokemonList.filter(p => {
+    const psp = speciesDB[p.id];
+    if (!psp || p.id === selectedId || psp.rarity !== myRarity) return false;
+    if (psp.name === 'ditto') return false;
+    if (isGenderless && GENDERLESS.has(psp.name)) return false;
+    return true;
+  });
+
+  // Batch load types for same-rarity pokemon (40 at a time)
+  const needTypes = sameRarity.filter(p => !speciesDB[p.id].types.length);
+  const BATCH = 40;
+  for (let i = 0; i < needTypes.length; i += BATCH) {
+    const chunk = needTypes.slice(i, i + BATCH);
+    await Promise.allSettled(chunk.map(p =>
+      fetch(`https://pokeapi.co/api/v2/pokemon/${p.id}/`, { signal: AbortSignal.timeout ? AbortSignal.timeout(8000) : undefined })
+        .then(r => r.json())
+        .then(d => {
+          if (speciesDB[p.id]) {
+            speciesDB[p.id].types = d.types.map(t => t.type.name.toLowerCase());
+          }
+        })
+        .catch(() => {})
+    ));
+  }
+
+  // Now filter by shared type
+  // Group by shared type(s)
+  const typeGroups = {}; // type -> [pokemon]
+  for (const p of sameRarity) {
+    const psp = speciesDB[p.id];
+    if (!psp || !psp.types.length) continue;
+    const sharedTypes = myTypes.filter(t => psp.types.includes(t));
+    for (const t of sharedTypes) {
+      if (!typeGroups[t]) typeGroups[t] = [];
+      typeGroups[t].push(p);
+    }
+  }
+
+  // Sort each group by dex id
+  for (const t of Object.keys(typeGroups)) {
+    typeGroups[t].sort((a,b) => a.id - b.id);
+  }
+
+  // Sort type keys by the selected pokemon's type order (primary type first)
+  const sortedTypes = myTypes.filter(t => typeGroups[t] && typeGroups[t].length > 0);
+
+  let anyGenderlessInResults = false;
+
+  if (sortedTypes.length === 0) {
+    html += `
+      <div class="no-results">
+        <div class="icon">🔍</div>
+        <h3>No compatible Pokémon found</h3>
+        <p>No other <strong>${RARITY_LABEL[myRarity]}</strong> Pokémon share a type with <strong>${sp.displayName}</strong>.<br/>
+        Ditto can still breed with it if it's Very Rare or lower rarity.</p>
+      </div>
+    `;
+  } else {
+    for (const type of sortedTypes) {
+      const members = typeGroups[type];
+      html += `
+        <div class="type-group-section">
+          <div class="type-group-header th-${type}">
+            <span class="type-badge type-${type}">${type.charAt(0).toUpperCase()+type.slice(1)}</span>
+            Compatible Pokémon
+            <span class="type-count">${members.length}</span>
+          </div>
+          <div class="pokemon-grid">
+            ${members.map(m => {
+              const markGenderless = !isGenderless && GENDERLESS.has(m.name);
+              if (markGenderless) anyGenderlessInResults = true;
+              return renderPokemonCard(m, { markGenderless });
+            }).join('')}
+          </div>
+        </div>
+      `;
+    }
+  }
+
+  if (anyGenderlessInResults) {
+    html += `
+      <p style="font-size:12px;color:#667;margin:10px 4px;">
+        * Genderless Pokémon always determine the egg's species — breeding with a marked Pokémon above will produce <em>that</em> Pokémon, not <strong>${sp.displayName}</strong>.
+      </p>
+    `;
+  }
+
+  // Ditto at bottom — only for VeryRare or lower
+  if (RARITY_ORDER.indexOf(myRarity) <= RARITY_ORDER.indexOf(DITTO_MAX_RARITY)) {
+    html += dittoSectionHtml(sp);
+  }
+
+  resultsEl.innerHTML = html;
+}
+
+function selectedInfoHtml(sp) {
+  const rarityClass = `rarity-${sp.rarity}`;
+  const typeHtml = (sp.types||[]).map(t => `<span class="type-badge type-${t}">${t.charAt(0).toUpperCase()+t.slice(1)}</span>`).join('');
+  const spriteUrl = Number.isInteger(selectedId)
+    ? `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${selectedId}.png`
+    : `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${sp.name}.png`;
+  const dexLabel = (selectedId < 10000 && Number.isInteger(selectedId))
+    ? `#${String(selectedId).padStart(3,'0')}`
+    : sp.displayName.includes('-') ? sp.displayName.split('-').slice(1).join('-') : '';
+  return `
+    <div class="selected-info">
+      <img src="${spriteUrl}"
+           class="selected-sprite" alt="${sp.displayName}" />
+      <div>
+        <div class="selected-name">${sp.displayName}
+          <span style="font-size:9px;color:rgba(255,255,255,0.6)"> ${dexLabel}</span></span>
+        </div>
+        <div class="selected-meta">
+          ${typeHtml}
+          <span class="rarity-tag ${rarityClass}">${RARITY_LABEL[sp.rarity]}</span>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderPokemonCard(m, opts = {}) {
+  const sp = speciesDB[m.id];
+  const types = sp?.types || [];
+  const rarity = sp?.rarity || 'Common';
+  const typeHtml = types.map(t => `<span class="type-badge type-${t}">${t.charAt(0).toUpperCase()+t.slice(1)}</span>`).join('');
+  // For alternate forms (non-integer IDs), use name-based sprite URL
+  const spriteUrl = Number.isInteger(m.id)
+    ? `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${m.id}.png`
+    : `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${m.name}.png`;
+  const dexLabel = (m.id < 10000 && Number.isInteger(m.id))
+    ? `#${String(m.id).padStart(3,'0')}`
+    : m.displayName.includes('-') ? m.displayName.split('-').slice(1).join('-') : '';
+  const genderlessMark = opts.markGenderless
+    ? ' <span title="Genderless — the egg will always be this species" style="color:#7a4ac9;font-weight:700;">*</span>'
+    : '';
+  return `
+    <div class="pokemon-card">
+      <img src="${spriteUrl}"
+           alt="${m.displayName}" loading="lazy"
+           onerror="this.src=''" />
+      <span class="pname">${m.displayName}${genderlessMark}</span>
+      <span class="pdex">${dexLabel}</span>
+      ${typeHtml ? `<div class="ptypes">${typeHtml}</div>` : ''}
+      <span class="prarity ${`rarity-${rarity}`}">${RARITY_LABEL[rarity]}</span>
+    </div>
+  `;
+}
+
+// ═══════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════
+loadAllData().catch(err => {
+  document.getElementById('loader').innerHTML = `
+    <div style="background:#fff5f5;border:2px solid #fca5a5;border-radius:10px;padding:20px;color:#dc2626;font-weight:700;font-size:13px;text-align:left;">
+      ⚠️ Failed to load Pokédex data from PokéAPI.<br/><br/>
+      <strong>Common causes:</strong><br/>
+      &bull; No internet connection<br/>
+      &bull; PokéAPI is temporarily down or rate-limiting<br/>
+      &bull; Request timed out<br/><br/>
+      <strong>Try:</strong> Refresh the page, or visit
+      <a href="https://pokeapi.co" target="_blank" style="color:#dc2626;">pokeapi.co</a>
+      to check API status.<br/><br/>
+      <small style="opacity:0.7">${err.message || err}</small>
+    </div>
+  `;
+});
+</script>
+</body>
+</html>
